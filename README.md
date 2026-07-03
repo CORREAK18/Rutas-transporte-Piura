@@ -1,50 +1,197 @@
-# Welcome to your Expo app 👋
+# RutasPiura
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplicación móvil de transporte público para la ciudad de Piura, Perú. Permite a los ciudadanos encontrar rutas de colectivos, combis y buses, visualizar sus recorridos en el mapa, ver paraderos oficiales y guardar sus rutas favoritas.
 
-## Get started
+---
 
-1. Install dependencies
+## Tecnologías
 
-   ```bash
-   npm install
-   ```
+| Capa | Tecnología |
+|---|---|
+| Framework móvil | Expo SDK 54 (React Native 0.81) |
+| Navegación | Expo Router v6 (file-based routing) |
+| Mapas | react-native-maps |
+| Base de datos | Neon PostgreSQL (vía HTTP API) |
+| Favoritos (local) | AsyncStorage |
+| Autenticación | Sesión local en AsyncStorage + verificación bcrypt en Neon |
 
-2. Start the app
+---
 
-   ```bash
-   npx expo start
-   ```
+## Roles de usuario
 
-In the output, you'll find options to open the app in a
+| Rol | Cómo accede | Permisos |
+|---|---|---|
+| **Administrador** | Inicia sesión con credenciales de admin | Crear, editar y eliminar rutas. Acceso completo. |
+| **Usuario registrado** | Crea una cuenta desde la pantalla de bienvenida | Ver rutas, ver mapa, guardar favoritos. |
+| **Visitante** | Entra con el botón "Entrar como Visitante" | Ver rutas y mapa únicamente. Sin favoritos. |
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+> El administrador es único y no se puede crear desde la aplicación. Se inserta directamente en la base de datos.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+---
 
-## Get a fresh project
+## Estructura del proyecto
 
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+rutas-transporte/
+├── app/
+│   ├── welcome.js              # Pantalla de bienvenida (login / registro)
+│   ├── _layout.js              # Layout raíz con redirección de sesión
+│   └── (tabs)/
+│       ├── index.js            # Home
+│       ├── buscar-ruta.js      # Búsqueda de rutas
+│       ├── resultados.js       # Resultados con radar de proximidad
+│       ├── favoritos.js        # Rutas favoritas del usuario
+│       ├── crear-ruta.js       # Formulario de creación/edición de ruta (admin)
+│       ├── crear-ruta-mapa.js  # Mapa interactivo para trazar recorridos (admin)
+│       ├── ruta/[routeId].js   # Detalle de una ruta
+│       └── mapa/[routeId].js   # Visualización del mapa de una ruta
+│
+├── src/
+│   ├── components/             # Componentes visuales reutilizables
+│   │   ├── ActionButton.js
+│   │   ├── AppScreen.js
+│   │   ├── Card.js
+│   │   ├── EmptyState.js
+│   │   ├── InputField.js
+│   │   ├── LoadingOverlay.js
+│   │   ├── MapRoute.js
+│   │   ├── RouteCard.js
+│   │   ├── StatsGrid.js
+│   │   └── StopTimeline.js
+│   │
+│   ├── controllers/            # Lógica de cada pantalla (hooks de estado)
+│   │   ├── useHomeController.js
+│   │   ├── useSearchController.js
+│   │   ├── useResultsController.js
+│   │   ├── useFavoritesController.js
+│   │   ├── useRouteDetailController.js
+│   │   ├── useRouteMapController.js
+│   │   ├── useCreateRouteController.js
+│   │   └── useCreateRouteMapController.js
+│   │
+│   ├── views/                  # Componentes de pantalla (UI pura)
+│   │   ├── HomeView.js
+│   │   ├── SearchView.js
+│   │   ├── ResultsView.js
+│   │   ├── FavoritesView.js
+│   │   ├── RouteDetailView.js
+│   │   ├── RouteMapView.js
+│   │   └── CreateRouteView.js
+│   │
+│   ├── services/               # Acceso a datos externos
+│   │   ├── neonDb.js           # Cliente HTTP para Neon PostgreSQL
+│   │   ├── authService.js      # Login, registro, sesión, logout
+│   │   ├── localDb.js          # Operaciones CRUD sobre rutas y paraderos en Neon
+│   │   ├── routeService.js     # Capa de negocio sobre rutas
+│   │   └── favoriteService.js  # Favoritos por usuario (AsyncStorage local)
+│   │
+│   ├── config/
+│   │   ├── theme.js            # Paleta de colores y tokens de diseño
+│   │   └── navigation.js       # Rutas de navegación nombradas
+│   │
+│   ├── models/
+│   │   └── route.js            # Modelo de datos de ruta
+│   │
+│   └── utils/
+│       ├── search.js           # Algoritmo de proximidad y scoring de rutas
+│       ├── strings.js          # Formateo de texto, distancias, dinero
+│       └── routePathStore.js   # Store temporal para pasar trazado entre pantallas
+│
+├── neon_schema.sql             # Schema de la base de datos Neon
+├── app.json                    # Configuración de Expo
+└── package.json
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-## Learn more
+## Base de datos
 
-To learn more about developing your project with Expo, look at the following resources:
+La base de datos está alojada en [Neon](https://neon.tech) (PostgreSQL serverless). La conexión se realiza sin drivers TCP nativos usando la API HTTP de Neon, lo que la hace compatible con React Native.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Tablas
 
-## Join the community
+| Tabla | Descripción |
+|---|---|
+| `users` | Usuarios registrados con contraseña hasheada (bcrypt via `pgcrypto`) |
+| `routes` | Rutas de transporte con trazado en coordenadas, tarifa, color y paraderos |
+| `stops` | Paraderos con nombre, referencia y coordenadas |
+| `route_stops` | Relación N:M entre rutas y paraderos con orden |
 
-Join our community of developers creating universal apps.
+> Los **favoritos** no se guardan en la base de datos. Se almacenan localmente en el dispositivo del usuario mediante `AsyncStorage` para mayor privacidad y rapidez.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+---
+
+## Funcionalidades
+
+### Para todos los usuarios
+- Ver listado de rutas de Piura
+- Buscar rutas por nombre, origen o destino
+- Ver el mapa de una ruta con su recorrido y paraderos
+- Radar de proximidad: escaneo visual que detecta rutas cercanas al usuario
+
+### Para usuarios registrados (además de lo anterior)
+- Guardar y quitar rutas de favoritos
+- Ver su lista personal de favoritos
+
+### Para el administrador (además de todo lo anterior)
+- Crear nuevas rutas de transporte
+- Trazar el recorrido de una ruta sobre un mapa interactivo
+- Marcar paraderos oficiales sobre el mapa
+- Editar rutas existentes (nombre, color, recorrido, paraderos)
+- Eliminar rutas del sistema
+
+---
+
+## Instalación y ejecución local
+
+### Requisitos previos
+- Node.js 18+
+- Expo CLI (`npm install -g expo-cli`)
+- Expo Go instalado en el dispositivo móvil (o emulador Android/iOS)
+
+### Pasos
+
+```bash
+# Clonar el repositorio
+git clone <url-del-repo>
+cd rutas-transporte
+
+# Instalar dependencias
+npm install
+
+# Iniciar el servidor de desarrollo
+npm start
+```
+
+Escanea el código QR con la app Expo Go en tu dispositivo para ejecutar la aplicación.
+
+---
+
+## Compilar APK (Android)
+
+Para generar un APK instalable se usa EAS Build de Expo.
+
+```bash
+# Instalar EAS CLI
+npm install -g eas-cli
+
+# Configurar el proyecto (primera vez)
+eas build:configure
+
+# Construir APK de desarrollo/preview
+eas build --platform android --profile preview
+```
+
+> Se requiere una cuenta gratuita en [expo.dev](https://expo.dev) para usar EAS Build.
+
+---
+
+## Variables de entorno
+
+Actualmente la cadena de conexión a Neon está embebida en `src/services/neonDb.js`. Para un entorno de producción se recomienda moverla a un archivo `.env` usando `expo-constants` o un backend intermedio.
+
+---
+
+## Autor
+
+Desarrollado por **Krystopher Gianpablo Correa Juarez** — Piura, Perú, 2026.
