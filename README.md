@@ -188,7 +188,7 @@ eas build --platform android --profile preview
 
 ## Variables de entorno
 
-Actualmente la cadena de conexión a Neon está embebida en `src/services/neonDb.js`. Para un entorno de producción se recomienda moverla a un archivo `.env` usando `expo-constants` o un backend intermedio.
+Toda variable considerada privada se encuentra en el archivo `.env`. Por seguridad, ese archivo no se encuentra en el repositorio.
 
 ---
 
