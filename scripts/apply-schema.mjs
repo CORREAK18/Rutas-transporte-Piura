@@ -6,16 +6,16 @@
  */
 
 import { readFileSync } from "fs";
-import { join, dirname } from "path";
+import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // ─── Credenciales Neon ───────────────────────────────────────────────────────
-const NEON_HOST = "ep-dark-thunder-ac8sxya6-pooler.sa-east-1.aws.neon.tech";
-const NEON_USER = "neondb_owner";
-const NEON_PASSWORD = "npg_yociI9umKaw8";
-const NEON_DATABASE = "neondb";
+const NEON_HOST = process.env.EXPO_PUBLIC_NEON_HOST;
+const NEON_USER = process.env.EXPO_PUBLIC_NEON_USER;
+const NEON_PASSWORD = process.env.EXPO_PUBLIC_NEON_PASSWORD;
+const NEON_DATABASE = process.env.EXPO_PUBLIC_NEON_DATABASE;
 const NEON_CONNECTION_STRING = `postgresql://${NEON_USER}:${NEON_PASSWORD}@${NEON_HOST}/${NEON_DATABASE}?sslmode=require`;
 const NEON_ENDPOINT = `https://${NEON_HOST}/sql`;
 
@@ -52,7 +52,7 @@ for (const sqlPath of SQL_PATHS) {
     schemaSQL = readFileSync(sqlPath, "utf-8");
     console.log(`✅ Schema encontrado en: ${sqlPath}`);
     break;
-  } catch {}
+  } catch { }
 }
 
 if (!schemaSQL) {
